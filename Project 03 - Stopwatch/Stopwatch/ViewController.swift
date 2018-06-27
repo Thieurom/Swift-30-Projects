@@ -7,166 +7,249 @@
 
 import UIKit
 
-class ViewController: UIViewController, UITableViewDelegate {
-  // MARK: - Variables
-  fileprivate let mainStopwatch: Stopwatch = Stopwatch()
-  fileprivate let lapStopwatch: Stopwatch = Stopwatch()
-  fileprivate var isPlay: Bool = false
-  fileprivate var laps: [String] = []
+class ViewController: UIViewController, UITableViewDataSource {
+    
+    // MARK: - Data
+    
+    private let cellId = "CellId"
+    let stopwatch = Stopwatch()
+    var laps = [TimeInterval]()
+    
+    // MARK: - Views
+    
+    lazy var elapsedTimeLabel: UILabel = {
+        let label = UILabel()
+        
+        label.font = UIFont.monospacedDigitSystemFont(ofSize: 80, weight: .thin)
+        label.textAlignment = .center
+        label.textColor = .white
+        label.text = "00:00.00"
+        
+        return label
+    }()
+    
+    lazy var startButton: UIButton = {
+        let button = UIButton()
+        
+        button.setTitle("Start", for: .normal)
+        button.setTitle("Stop", for: .selected)
+        
+        button.layer.cornerRadius = 40
+        
+        return button
+    }()
+    
+    lazy var lapButton: UIButton = {
+        let button = UIButton()
+        
+        button.setTitle("Lap", for: .normal)
+        button.backgroundColor = .mineShaft
+        button.setTitleColor(.osloGray, for: .normal)
+        button.layer.cornerRadius = 40
+        
+        return button
+    }()
+    
+    lazy var lapsTableView: UITableView = {
+        let tableView = UITableView()
+        
+        tableView.backgroundColor = .woodsmoke
+        tableView.separatorColor = .osloGray
+        
+        return tableView
+    }()
+    
+    // MARK: - View life cycle
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        setUpView()
+        configButtons()
+    }
+    
+    // MARK: - Action methods
+    
+    @objc private func startButtonTapped(_ button: UIButton) {
+        if !stopwatch.isRunning {
+            button.isSelected = true
+            
+            Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(ViewController.updateElapsedTime(_:)), userInfo: nil, repeats: true)
 
-  // MARK: - UI components
-  @IBOutlet weak var timerLabel: UILabel!
-  @IBOutlet weak var lapTimerLabel: UILabel!
-  @IBOutlet weak var playPauseButton: UIButton!
-  @IBOutlet weak var lapRestButton: UIButton!
-  @IBOutlet weak var lapsTableView: UITableView!
-  
-  // MARK: - Life Cycle
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    
-    let initCircleButton: (UIButton) -> Void = { button in
-      button.layer.cornerRadius = 0.5 * button.bounds.size.width
-      button.backgroundColor = UIColor.white
+            stopwatch.start()
+        } else {
+            button.isSelected = false
+            stopwatch.pause()
+        }
+        
+        updateButtons()
     }
     
-    initCircleButton(playPauseButton)
-    initCircleButton(lapRestButton)
-  
-    lapRestButton.isEnabled = false
-    
-    lapsTableView.delegate = self;
-    lapsTableView.dataSource = self;
-  }
-  
-  // MARK: - UI Settings
-  override var shouldAutorotate : Bool {
-    return false
-  }
-  
-  override var preferredStatusBarStyle : UIStatusBarStyle {
-    return UIStatusBarStyle.lightContent
-  }
-  
-  override var supportedInterfaceOrientations : UIInterfaceOrientationMask {
-    return UIInterfaceOrientationMask.portrait
-  }
-  
-  // MARK: - Actions
-  @IBAction func playPauseTimer(_ sender: AnyObject) {
-    lapRestButton.isEnabled = true
-  
-    changeButton(lapRestButton, title: "Lap", titleColor: UIColor.black)
-    
-    if !isPlay {
-      unowned let weakSelf = self
-      
-      mainStopwatch.timer = Timer.scheduledTimer(timeInterval: 0.035, target: weakSelf, selector: Selector.updateMainTimer, userInfo: nil, repeats: true)
-      lapStopwatch.timer = Timer.scheduledTimer(timeInterval: 0.035, target: weakSelf, selector: Selector.updateLapTimer, userInfo: nil, repeats: true)
-      
-      RunLoop.current.add(mainStopwatch.timer, forMode: .commonModes)
-      RunLoop.current.add(lapStopwatch.timer, forMode: .commonModes)
-      
-      isPlay = true
-      changeButton(playPauseButton, title: "Stop", titleColor: UIColor.red)
-    } else {
-      
-      mainStopwatch.timer.invalidate()
-      lapStopwatch.timer.invalidate()
-      isPlay = false
-      changeButton(playPauseButton, title: "Start", titleColor: UIColor.green)
-      changeButton(lapRestButton, title: "Reset", titleColor: UIColor.black)
-    }
-  }
-  
-  @IBAction func lapResetTimer(_ sender: AnyObject) {
-    if !isPlay {
-      resetMainTimer()
-      resetLapTimer()
-      changeButton(lapRestButton, title: "Lap", titleColor: UIColor.lightGray)
-      lapRestButton.isEnabled = false
-    } else {
-      if let timerLabelText = timerLabel.text {
-        laps.append(timerLabelText)
-      }
-      lapsTableView.reloadData()
-      resetLapTimer()
-      unowned let weakSelf = self
-      lapStopwatch.timer = Timer.scheduledTimer(timeInterval: 0.035, target: weakSelf, selector: Selector.updateLapTimer, userInfo: nil, repeats: true)
-      RunLoop.current.add(lapStopwatch.timer, forMode: .commonModes)
-    }
-  }
-  
-  // MARK: - Private Helpers
-  fileprivate func changeButton(_ button: UIButton, title: String, titleColor: UIColor) {
-    button.setTitle(title, for: UIControlState())
-    button.setTitleColor(titleColor, for: UIControlState())
-  }
-  
-  fileprivate func resetMainTimer() {
-    resetTimer(mainStopwatch, label: timerLabel)
-    laps.removeAll()
-    lapsTableView.reloadData()
-  }
-  
-  fileprivate func resetLapTimer() {
-    resetTimer(lapStopwatch, label: lapTimerLabel)
-  }
-  
-  fileprivate func resetTimer(_ stopwatch: Stopwatch, label: UILabel) {
-    stopwatch.timer.invalidate()
-    stopwatch.counter = 0.0
-    label.text = "00:00:00"
-  }
-
-  @objc func updateMainTimer() {
-    updateTimer(mainStopwatch, label: timerLabel)
-  }
-  
-  @objc func updateLapTimer() {
-    updateTimer(lapStopwatch, label: lapTimerLabel)
-  }
-  
-  func updateTimer(_ stopwatch: Stopwatch, label: UILabel) {
-    stopwatch.counter = stopwatch.counter + 0.035
-    
-    var minutes: String = "\((Int)(stopwatch.counter / 60))"
-    if (Int)(stopwatch.counter / 60) < 10 {
-      minutes = "0\((Int)(stopwatch.counter / 60))"
+    @objc private func lapButtonTapped(_ button: UIButton) {
+        if stopwatch.isRunning {
+            addNewLap()
+        } else if button.isEnabled {
+            button.isEnabled = false
+            stopwatch.stop()
+            laps.removeAll()
+            
+            lapsTableView.reloadData()
+            updateButtons()
+            updateElapsedTimeLabel()
+        }
     }
     
-    var seconds: String = String(format: "%.2f", (stopwatch.counter.truncatingRemainder(dividingBy: 60)))
-    if stopwatch.counter.truncatingRemainder(dividingBy: 60) < 10 {
-      seconds = "0" + seconds
+    // MARK: - UITableView Data Source
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return laps.count
     }
     
-    label.text = minutes + ":" + seconds
-  }
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath) as! DetailTableViewCell
+        
+        config(cell, at: indexPath)
+        
+        return cell
+    }
 }
 
-// MARK: - UITableViewDataSource
-extension ViewController: UITableViewDataSource {
-  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    return laps.count
-  }
-  
-  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let identifier: String = "lapCell"
-    let cell: UITableViewCell = tableView.dequeueReusableCell(withIdentifier: identifier, for: indexPath)
+// ========================================================================================================
+// MARK: - Private helpers
 
-    if let labelNum = cell.viewWithTag(11) as? UILabel {
-      labelNum.text = "Lap \(laps.count - (indexPath as NSIndexPath).row)"
-    }
-    if let labelTimer = cell.viewWithTag(12) as? UILabel {
-      labelTimer.text = laps[laps.count - (indexPath as NSIndexPath).row - 1]
+private extension ViewController {
+    
+    // MARK: - Config views
+    
+    func setUpView() {
+        view.backgroundColor = .woodsmoke
+        title = "Stopwatch"
+        
+        view.addSubview(elapsedTimeLabel)
+        view.addSubview(startButton)
+        view.addSubview(lapButton)
+        view.addSubview(lapsTableView)
+        
+        elapsedTimeLabel.translatesAutoresizingMaskIntoConstraints = false
+        startButton.translatesAutoresizingMaskIntoConstraints = false
+        lapButton.translatesAutoresizingMaskIntoConstraints = false
+        lapsTableView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let margins = view.layoutMarginsGuide
+        
+        // label
+        NSLayoutConstraint.activate([
+            elapsedTimeLabel.topAnchor.constraint(equalTo: topLayoutGuide.bottomAnchor),
+            elapsedTimeLabel.leadingAnchor.constraint(equalTo: margins.leadingAnchor),
+            elapsedTimeLabel.trailingAnchor.constraint(equalTo: margins.trailingAnchor),
+            elapsedTimeLabel.heightAnchor.constraint(equalTo: elapsedTimeLabel.widthAnchor, multiplier: 1)])
+        
+        // buttons
+        NSLayoutConstraint.activate([
+            startButton.widthAnchor.constraint(equalToConstant: 80),
+            startButton.heightAnchor.constraint(equalToConstant: 80),
+            startButton.topAnchor.constraint(equalTo: elapsedTimeLabel.bottomAnchor),
+            startButton.trailingAnchor.constraint(equalTo: margins.trailingAnchor)])
+        
+        NSLayoutConstraint.activate([
+            lapButton.widthAnchor.constraint(equalToConstant: 80),
+            lapButton.heightAnchor.constraint(equalToConstant: 80),
+            lapButton.bottomAnchor.constraint(equalTo: startButton.bottomAnchor),
+            lapButton.leadingAnchor.constraint(equalTo: margins.leadingAnchor)])
+        
+        // table view
+        NSLayoutConstraint.activate([
+            lapsTableView.topAnchor.constraint(equalTo: startButton.bottomAnchor),
+            lapsTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            lapsTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            lapsTableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)])
+        
+        lapsTableView.register(DetailTableViewCell.self, forCellReuseIdentifier: cellId)
+        lapsTableView.dataSource = self
     }
     
-    return cell
-  }
-}
-
-// MARK: - Extension
-fileprivate extension Selector {
-  static let updateMainTimer = #selector(ViewController.updateMainTimer)
-  static let updateLapTimer = #selector(ViewController.updateLapTimer)
+    func configButtons() {
+        startButton.addTarget(self, action: #selector(ViewController.startButtonTapped(_:)), for: .touchUpInside)
+        lapButton.addTarget(self, action: #selector(ViewController.lapButtonTapped(_:)), for: .touchUpInside)
+        
+        // disable lapButton at launch
+        lapButton.isEnabled = false
+        
+        updateButtons()
+    }
+    
+    func config(_ cell: UITableViewCell, at indexPath: IndexPath) {
+        let index = laps.count - indexPath.row
+        let lap = laps[index - 1]
+        
+        cell.textLabel?.text = "Lap \(index)"
+        cell.detailTextLabel?.text = elapsedTimeString(elapsedTime: lap)
+    }
+    
+    // MARK: - Update views
+    
+    func updateButtons() {
+        if stopwatch.isRunning {
+            lapButton.isEnabled = true
+        }
+        
+        if lapButton.isEnabled {
+            lapButton.setTitleColor(.white, for: .normal)
+        } else {
+            lapButton.setTitleColor(.osloGray, for: .normal)
+            lapButton.setTitle("Lap", for: .normal)
+        }
+        
+        if startButton.isSelected {
+            startButton.backgroundColor = .vanCleef
+            startButton.setTitleColor(.redOrange, for: .normal)
+            
+            lapButton.setTitle("Lap", for: .normal)
+        } else {
+            startButton.backgroundColor = .zuccine
+            startButton.setTitleColor(.malachite, for: .normal)
+            
+            if lapButton.isEnabled {
+                lapButton.setTitle("Reset", for: .normal)
+            }
+        }
+    }
+    
+    @objc func updateElapsedTime(_ timer: Timer) {
+        if stopwatch.isRunning {
+            updateElapsedTimeLabel()
+            
+            if laps.isEmpty {
+                addNewLap()
+            } else {
+                updateLastLap()
+            }
+        } else {
+            timer.invalidate()
+        }
+    }
+    
+    func addNewLap() {
+        let totalElapsedTime = laps.reduce(0, +)
+        let newLap = stopwatch.elapsedTime - totalElapsedTime
+        
+        laps.append(newLap)
+        lapsTableView.reloadData()
+    }
+    
+    func updateLastLap() {
+        let totalElapsedTime = laps.reduce(0, +)
+        laps[laps.count - 1] += stopwatch.elapsedTime - totalElapsedTime
+        lapsTableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .none)
+    }
+    
+    func updateElapsedTimeLabel() {
+        elapsedTimeLabel.text = elapsedTimeString(elapsedTime: stopwatch.elapsedTime)
+    }
+    
+    // MARK: - Utilities
+    
+    func elapsedTimeString(elapsedTime: TimeInterval) -> String {
+        return String(format: "%02d:%02d.%02d", Int(elapsedTime / 60), Int(elapsedTime.truncatingRemainder(dividingBy: 60)), Int((elapsedTime * 100).truncatingRemainder(dividingBy: 100)))
+    }
 }
