@@ -7,102 +7,78 @@
 
 import UIKit
 
+protocol DetailViewControllerDelegate: class {
+    func didSave(todo: ToDoItem)
+}
+
 class DetailViewController: UIViewController {
-  
-  @IBOutlet weak var childButton: UIButton!
-  @IBOutlet weak var phoneButton: UIButton!
-  @IBOutlet weak var shoppingCartButton: UIButton!
-  @IBOutlet weak var travelButton: UIButton!
-  @IBOutlet weak var todoTitleLabel: UITextField!
-  @IBOutlet weak var todoDatePicker: UIDatePicker!
-  
-  var todo: ToDoItem?
-  
-  override func viewDidLoad() {
-    super.viewDidLoad()
     
-    if let todo = todo {
-      self.title = "Edit Todo"
-      if todo.image == "child-selected"{
-        childButton.isSelected = true
-      }
-      else if todo.image == "phone-selected"{
-        phoneButton.isSelected = true
-      }
-      else if todo.image == "shopping-cart-selected"{
-        shoppingCartButton.isSelected = true
-      }
-      else if todo.image == "travel-selected"{
-        travelButton.isSelected = true
-      }
-      
-      todoTitleLabel.text = todo.title
-      todoDatePicker.setDate(todo.date, animated: false)
-    } else {
-      title = "New Todo"
-      childButton.isSelected = true
-    }
-  }
-  
-  // MARK: type select
-  @IBAction func selectChild(_ sender: AnyObject) {
-    resetButtons()
-    childButton.isSelected = true
-  }
-  
-  @IBAction func selectPhone(_ sender: AnyObject) {
-    resetButtons()
-    phoneButton.isSelected = true
-  }
-  
-  @IBAction func selectShoppingCart(_ sender: AnyObject) {
-    resetButtons()
-    shoppingCartButton.isSelected = true
-  }
-  
-  @IBAction func selectTravel(_ sender: AnyObject) {
-    resetButtons()
-    travelButton.isSelected = true
-  }
-  
-  func resetButtons() {
-    childButton.isSelected = false
-    phoneButton.isSelected = false
-    shoppingCartButton.isSelected = false
-    travelButton.isSelected = false
-  }
-  
-  // MARK: create or edit a new todo
-  @IBAction func tapDone(_ sender: AnyObject) {
-    var image = ""
-    if childButton.isSelected {
-      image = "child-selected"
-    }
-    else if phoneButton.isSelected {
-      image = "phone-selected"
-    }
-    else if shoppingCartButton.isSelected {
-      image = "shopping-cart-selected"
-    }
-    else if travelButton.isSelected {
-      image = "travel-selected"
+    // MARK: - Data
+    
+    var todo: ToDoItem?
+    private var selectedIndex: Int = 0
+    weak var delegate: DetailViewControllerDelegate?
+    
+    // MARK: - Views
+    var detailView: DetailToDoView!
+    
+    // MARK: - Life cycle
+    
+    override func loadView() {
+        detailView = DetailToDoView()
+        
+        view = detailView
     }
     
-    if let todo = todo {
-      todo.image = image
-      todo.title = todoTitleLabel.text!
-      todo.date = todoDatePicker.date
-    } else {
-      let uuid = UUID().uuidString
-      todo = ToDoItem(id: uuid, image: image, title: todoTitleLabel.text!, date: todoDatePicker.date)
-      todos.append(todo!)
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        setUpView()
+        updateView()
     }
     
-    let _ = navigationController?.popToRootViewController(animated: true)
-  }
-  
-  override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-    super.touchesBegan(touches, with: event)
-    view.endEditing(true)
-  }
+    func updateView() {
+        if let todo = todo {
+            selectedIndex = ToDoCategory.allCategories.index(of: todo.category)!
+            detailView.datePicker.date = todo.dueDate
+        }
+        
+        detailView.textField.text = todo?.title
+        detailView.categoryButtons[selectedIndex].isSelected = true
+    }
+    
+    @objc func categoryButtonPressed(_ button: UIButton) {
+        resetCategoryButtonsState()
+        button.isSelected = true
+        selectedIndex = detailView.categoryButtons.index(of: button)!
+    }
+    
+    @objc func saveButtonPressed() {
+        guard let title = detailView.textField.text, !title.isEmpty else {
+            return
+        }
+        
+        let category = ToDoCategory.allCategories[selectedIndex]
+        let dueDate = detailView.datePicker.date
+        let todo = ToDoItem(title: title, category: category, dueDate: dueDate)
+        delegate?.didSave(todo: todo)
+        
+        navigationController?.popViewController(animated: true)
+    }
+    
+    // MARK: - Private helpers
+    
+    private func setUpView() {
+        detailView.categoryButtons.forEach { (button) in
+            button.addTarget(self, action: #selector(DetailViewController.categoryButtonPressed(_:)), for: .touchUpInside)
+        }
+        
+        detailView.saveButton.addTarget(self, action: #selector(DetailViewController.saveButtonPressed), for: .touchUpInside)
+    }
+    
+    private func resetCategoryButtonsState() {
+        detailView.categoryButtons.forEach { (button) in
+            button.isSelected = false
+        }
+    }
 }

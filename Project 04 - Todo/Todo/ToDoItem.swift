@@ -5,18 +5,27 @@
 //  Copyright © 2016 YiGu. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
-class ToDoItem: NSObject {
-  var id: String
-  var image: String
-  var title: String
-  var date: Date
-  
-  init(id: String, image: String, title: String, date: Date) {
-    self.id = id
-    self.image = image
-    self.title = title
-    self.date = date
-  }
+enum ToDoCategory {
+    case kid
+    case shopping
+    case phone
+    case travel
+    
+    static var allCategories: [ToDoCategory] {
+        return [.kid, .shopping, .phone, .travel]
+    }
+}
+
+struct ToDoItem {
+    var title: String
+    var category: ToDoCategory
+    var dueDate: Date
+    
+    init(title: String, category: ToDoCategory, dueDate: Date) {
+        self.title = title
+        self.category = category
+        self.dueDate = dueDate
+    }
 }

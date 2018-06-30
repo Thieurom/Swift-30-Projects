@@ -7,109 +7,157 @@
 
 import UIKit
 
-var todos: [ToDoItem] = []
-
 class ViewController: UIViewController {
-  
-  @IBOutlet weak var todoTableView: UITableView!
-  
-  override func viewDidLoad() {
-    super.viewDidLoad()
     
-    navigationItem.leftBarButtonItem = editButtonItem
+    // MARK: - Data
     
-    todos = [ToDoItem(id: "1", image: "child-selected", title: "Go to Disney", date: dateFromString("2014-10-20")!),
-             ToDoItem(id: "2", image: "shopping-cart-selected", title: "Cicso Shopping", date: dateFromString("2014-10-28")!),
-             ToDoItem(id: "3", image: "phone-selected", title: "Phone to Jobs", date: dateFromString("2014-10-30")!),
-             ToDoItem(id: "4", image: "travel-selected", title: "Plan to Europe", date: dateFromString("2014-10-31")!)]
-  }
-  
-  override func viewWillAppear(_ animated: Bool) {
-    super.viewWillAppear(animated)
-    todoTableView.reloadData()
-  }
-  
-  // MARK - helper func
-  func setMessageLabel(_ messageLabel: UILabel, frame: CGRect, text: String, textColor: UIColor, numberOfLines: Int, textAlignment: NSTextAlignment, font: UIFont) {
-    messageLabel.frame = frame
-    messageLabel.text = text
-    messageLabel.textColor = textColor
-    messageLabel.numberOfLines = numberOfLines
-    messageLabel.textAlignment = textAlignment
-    messageLabel.font = font
-    messageLabel.sizeToFit()
-  }
-  
-  func setCellWithTodoItem(_ cell: UITableViewCell, todo: ToDoItem) {
-    let imageView: UIImageView = cell.viewWithTag(11) as! UIImageView
-    let titleLabel: UILabel = cell.viewWithTag(12) as! UILabel
-    let dateLabel: UILabel = cell.viewWithTag(13) as! UILabel
+    var todoStore: ToDoStore!
+    private let cellId = "ToDoCellId"
     
-    imageView.image = UIImage(named: todo.image)
-    titleLabel.text = todo.title
-    dateLabel.text = stringFromDate(todo.date)
-  }
-  
-  override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-    if segue.identifier == "editTodo" {
-      let vc = segue.destination as! DetailViewController
-      let indexPath = todoTableView.indexPathForSelectedRow
-      if let indexPath = indexPath {
-        vc.todo = todos[(indexPath as NSIndexPath).row]
-      }
+    // MARK: - Views
+    
+    lazy var tableView: UITableView = {
+        let tableView = UITableView()
+        
+        return tableView
+    }()
+    
+    // MARK: - View life cycle
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        setUpView()
+        todoStore.load()
     }
-  }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        tableView.reloadData()
+    }
+    
+    override func setEditing(_ editing: Bool, animated: Bool) {
+        super.setEditing(editing, animated: animated)
+        
+        tableView.setEditing(editing, animated: true)
+    }
+    
+    @objc func addBarButtonPressed() {
+        showDetailViewController(for: nil)
+    }
+    
+    // MARK: - Private helpers
+    
+    private func setUpView() {
+        // navigation bar
+        navigationItem.title = "Todo List"
+        navigationItem.leftBarButtonItem = editButtonItem
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(ViewController.addBarButtonPressed))
+
+        // add table view to view's hierarchy
+        view.addSubview(tableView)
+        
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            tableView.topAnchor.constraint(equalTo: view.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)])
+        
+        // setup table view
+        tableView.register(ToDoCell.self, forCellReuseIdentifier: cellId)
+        tableView.dataSource = self
+        tableView.delegate = self
+    }
+    
+    private func configureCell(_ cell: ToDoCell, at indexPath: IndexPath) {
+        guard let todoItem = todoStore.todo(at: indexPath.row) else {
+            return
+        }
+        
+        cell.textLabel?.text = todoItem.title
+        cell.detailTextLabel?.text = todoItem.dueDate.toString(dateFormat: "yyyy-MM-dd")
+        cell.imageView?.image = UIImage(category: todoItem.category)
+    }
+    
+    private func showDetailViewController(for todo: ToDoItem? = nil) {
+        let detailViewController = DetailViewController()
+        
+        detailViewController.todo = todo
+        detailViewController.title = todo == nil ? "New Todo" : "Edit Todo"
+        detailViewController.delegate = self
+        navigationController?.pushViewController(detailViewController, animated: true)
+    }
 }
+
+// ========================================================================================================
+
+// MARK: - UITableView Data Source
 
 extension ViewController: UITableViewDataSource {
-  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     
-    if todos.count != 0 {
-      return todos.count
-    } else {
-      let messageLabel: UILabel = UILabel()
-      
-      setMessageLabel(messageLabel, frame: CGRect(x: 0, y: 0, width: self.view.bounds.size.width, height: self.view.bounds.size.height), text: "No data is currently available.", textColor: UIColor.black, numberOfLines: 0, textAlignment: NSTextAlignment.center, font: UIFont(name:"Palatino-Italic", size: 20)!)
-      
-      self.todoTableView.backgroundView = messageLabel
-      self.todoTableView.separatorStyle = UITableViewCellSeparatorStyle.none
-      
-      return 0
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if todoStore.todoCount > 0 {
+            return todoStore.todoCount
+        } else {
+            let messageLabel = UILabel()
+            messageLabel.font = UIFont.systemFont(ofSize: 20)
+            messageLabel.textAlignment = .center
+            messageLabel.text = "Empty list"
+            
+            tableView.backgroundView = messageLabel
+            tableView.separatorStyle = .none
+            
+            return 0
+        }
     }
-  }
-  
-  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let cellIdentifier: String = "todoCell"
-    let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath)
     
-    setCellWithTodoItem(cell, todo: todos[(indexPath as NSIndexPath).row])
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellId, for: indexPath) as? ToDoCell else {
+            fatalError("Failed to dequeue cell")
+        }
+        
+        configureCell(cell, at: indexPath)
+        
+        return cell
+    }
     
-    return cell
-  }
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            todoStore.removeTodo(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .automatic)
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        todoStore.moveTodo(fromIndex: sourceIndexPath.row, toIndex: destinationIndexPath.row)
+    }
 }
 
+// MARK: - UITableView Delegate
+
 extension ViewController: UITableViewDelegate {
-  // Edit mode
-  override func setEditing(_ editing: Bool, animated: Bool) {
-    super.setEditing(editing, animated: animated)
-    todoTableView.setEditing(editing, animated: true)
-  }
-  
-  // Delete the cell
-  func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-    if editingStyle == UITableViewCellEditingStyle.delete {
-      todos.remove(at: (indexPath as NSIndexPath).row)
-      todoTableView.deleteRows(at: [indexPath], with: UITableViewRowAnimation.automatic)
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard let todo = todoStore.todo(at: indexPath.row) else {
+            return
+        }
+        
+        showDetailViewController(for: todo)
     }
-  }
-  
-  // Move the cell
-  func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-    return self.isEditing
-  }
-  
-  func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
-    let todo = todos.remove(at: (sourceIndexPath as NSIndexPath).row)
-    todos.insert(todo, at: (destinationIndexPath as NSIndexPath).row)
-  }
+}
+
+// MARK: - DetailViewController Delegate
+
+extension ViewController: DetailViewControllerDelegate {
+    
+    func didSave(todo: ToDoItem) {
+        if let selectedIndexPath = tableView.indexPathForSelectedRow {
+            todoStore.updateTodo(todo, at: selectedIndexPath.row)
+        } else {
+            todoStore.addTodo(todo)
+        }
+    }
 }
