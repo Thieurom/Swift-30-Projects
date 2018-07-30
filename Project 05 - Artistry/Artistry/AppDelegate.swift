@@ -24,14 +24,23 @@ import UIKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-  
-  var window: UIWindow?
-  
-  func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
-    // Override point for customization after application launch.
-    UINavigationBar.appearance().tintColor = UIColor.white
-    return true
-  }
-  
+    
+    var window: UIWindow?
+    
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        window = window ?? UIWindow()
+        window?.backgroundColor = .white
+        
+        let navigationController = UINavigationController(rootViewController: ArtistListViewController())
+        window!.rootViewController = navigationController
+        window!.makeKeyAndVisible()
+        
+        UINavigationBar.appearance().barTintColor = UIColor(red: 105/255, green: 159/255, blue: 56/255, alpha: 1.0)
+        UINavigationBar.appearance().tintColor = UIColor.white
+        UINavigationBar.appearance().titleTextAttributes = [NSAttributedStringKey.font: UIFont(name: "Optima-Bold", size: 24) ?? UIFont.systemFont(ofSize: 24), NSAttributedStringKey.foregroundColor: UIColor.white]
+        
+        return true
+    }
+    
 }
 

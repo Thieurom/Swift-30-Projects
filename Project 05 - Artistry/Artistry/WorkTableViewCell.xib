@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="14113" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" rowHeight="410" id="0CZ-DN-Eys" customClass="WorkTableViewCell" customModule="Artistry" customModuleProvider="target">
+            <rect key="frame" x="0.0" y="0.0" width="427" height="410"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="0CZ-DN-Eys" id="eSI-IQ-ySk">
+                <rect key="frame" x="0.0" y="0.0" width="427" height="409.5"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="UsS-Dk-O40">
+                        <rect key="frame" x="20" y="11" width="387" height="167.5"/>
+                    </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6Br-fG-p1b">
+                        <rect key="frame" x="20" y="192.5" width="387" height="20.5"/>
+                        <fontDescription key="fontDescription" style="UICTFontTextStyleHeadline"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" verticalCompressionResistancePriority="749" scrollEnabled="NO" editable="NO" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="Rzy-SG-QZW">
+                        <rect key="frame" x="20" y="221" width="387" height="178"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <mutableString key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.</mutableString>
+                        <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <fontDescription key="fontDescription" style="UICTFontTextStyleFootnote"/>
+                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                    </textView>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="6Br-fG-p1b" firstAttribute="leading" secondItem="UsS-Dk-O40" secondAttribute="leading" id="0nk-VJ-rRC"/>
+                    <constraint firstItem="Rzy-SG-QZW" firstAttribute="trailing" secondItem="6Br-fG-p1b" secondAttribute="trailing" id="1Aq-Nb-V1P"/>
+                    <constraint firstItem="Rzy-SG-QZW" firstAttribute="top" secondItem="6Br-fG-p1b" secondAttribute="bottom" constant="8" id="2vn-vU-bWL"/>
+                    <constraint firstItem="6Br-fG-p1b" firstAttribute="top" secondItem="UsS-Dk-O40" secondAttribute="bottom" constant="14" id="5x3-3H-bPz"/>
+                    <constraint firstAttribute="bottomMargin" secondItem="Rzy-SG-QZW" secondAttribute="bottom" id="AUO-QQ-caF"/>
+                    <constraint firstItem="6Br-fG-p1b" firstAttribute="trailing" secondItem="UsS-Dk-O40" secondAttribute="trailing" id="Mew-b2-VSg"/>
+                    <constraint firstItem="UsS-Dk-O40" firstAttribute="top" secondItem="eSI-IQ-ySk" secondAttribute="topMargin" id="NXn-UZ-pFK"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="UsS-Dk-O40" secondAttribute="trailing" id="Ojw-Ao-PF3"/>
+                    <constraint firstItem="Rzy-SG-QZW" firstAttribute="leading" secondItem="6Br-fG-p1b" secondAttribute="leading" id="VhF-Yj-2OD"/>
+                    <constraint firstItem="UsS-Dk-O40" firstAttribute="leading" secondItem="eSI-IQ-ySk" secondAttribute="leadingMargin" id="odU-5C-lBn"/>
+                </constraints>
+            </tableViewCellContentView>
+            <connections>
+                <outlet property="moreInfoTextView" destination="Rzy-SG-QZW" id="9Rf-A9-7mW"/>
+                <outlet property="workImageView" destination="UsS-Dk-O40" id="RGo-aY-VjQ"/>
+                <outlet property="workTitleLabel" destination="6Br-fG-p1b" id="pVF-eS-e3z"/>
+            </connections>
+            <point key="canvasLocation" x="4.5" y="94"/>
+        </tableViewCell>
+    </objects>
+</document>
